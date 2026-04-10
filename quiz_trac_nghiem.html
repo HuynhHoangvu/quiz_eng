@@ -1,0 +1,325 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+#app{padding:1rem 0}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px}
+.title{font-size:18px;font-weight:500;color:var(--color-text-primary)}
+.progress-bar{background:var(--color-background-secondary);border-radius:99px;height:6px;flex:1;min-width:120px;margin:0 12px}
+.progress-fill{height:6px;border-radius:99px;background:#7F77DD;transition:width 0.3s}
+.counter{font-size:13px;color:var(--color-text-secondary);white-space:nowrap}
+.score-bar{display:flex;gap:12px;margin-bottom:1.5rem}
+.score-card{flex:1;background:var(--color-background-secondary);border-radius:8px;padding:10px 14px;text-align:center}
+.score-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:4px}
+.score-val{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.q-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.q-text{font-size:15px;color:var(--color-text-primary);line-height:1.6;margin-bottom:1rem}
+.opt{display:block;width:100%;text-align:left;background:transparent;border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:14px;color:var(--color-text-primary);cursor:pointer;transition:background 0.15s,border-color 0.15s;font-family:var(--font-sans)}
+.opt:hover:not(:disabled){background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.opt.correct{background:#EAF3DE;border-color:#639922;color:#3B6D11}
+.opt.wrong{background:#FCEBEB;border-color:#A32D2D;color:#791F1F}
+.opt.reveal{background:#E6F1FB;border-color:#378ADD;color:#185FA5}
+.opt:disabled{cursor:default}
+.feedback{font-size:13px;padding:8px 12px;border-radius:6px;margin-bottom:8px}
+.feedback.ok{background:#EAF3DE;color:#3B6D11}
+.feedback.no{background:#FCEBEB;color:#791F1F}
+.nav{display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap}
+.btn{border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 18px;font-size:14px;background:transparent;color:var(--color-text-primary);cursor:pointer;font-family:var(--font-sans)}
+.btn:hover{background:var(--color-background-secondary)}
+.btn.primary{background:#7F77DD;color:#fff;border-color:#7F77DD}
+.btn.primary:hover{background:#534AB7}
+.result{text-align:center;padding:2rem 1rem}
+.result h2{font-size:22px;font-weight:500;margin-bottom:8px;color:var(--color-text-primary)}
+.result p{font-size:15px;color:var(--color-text-secondary);margin-bottom:1.5rem}
+.badge{display:inline-block;font-size:40px;margin-bottom:12px}
+.review-item{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:1rem;margin-bottom:10px}
+.review-q{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px}
+.review-ans{font-size:13px;color:var(--color-text-secondary)}
+.review-ans span{font-weight:500}
+.review-ans .ok{color:#3B6D11}
+.review-ans .no{color:#791F1F}
+.mode-toggle{display:flex;gap:8px;margin-bottom:1.5rem}
+.mode-btn{flex:1;padding:8px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:13px;background:transparent;color:var(--color-text-secondary);cursor:pointer;font-family:var(--font-sans)}
+.mode-btn.active{background:#7F77DD;color:#fff;border-color:#7F77DD}
+</style>
+
+<div id="app"><div class="result"><span class="badge">📝</span><h2>Đang tải...</h2></div></div>
+
+<script>
+const ALL = [
+{q:"Ansel Adams was a landscape photographer _____ photographs of the western United States show nature on a grand scale.",o:["whose","of whom","of his","his"],a:0},
+{q:"As the main keyboard has a key for…………",o:["letter","digits","punctuation marks","all are true"],a:3},
+{q:"The message is ……………… from analogue to digital signals.",o:["changed","altered","redone","converted"],a:3},
+{q:"I don't think the door is ……………to get the sofa into the room.",o:["too much wide","wide enough","enough wide","too wide"],a:1},
+{q:"They live in a house __________ in 1890",o:["was built","that built","built","build"],a:2},
+{q:"We can go to the amusement park with you,………………?",o:["don't we","aren't we","can't we","can we"],a:2},
+{q:"What does URL stand for?",o:["Uniform Resource Locator","Uniform Resource Location","Universal Response Locator","Universal Response Location"],a:0},
+{q:"A ………… can fit into a jacket pocket.",o:["Notebook","Laptop","Subnotebook","Handheld"],a:3},
+{q:"Were the Wright brothers the ones __________ built the first aeroplane?",o:["Which","Who","Whom","That"],a:3},
+{q:"He spoke to the messengers _______ you were leaving with.",o:["that","which","who","whom"],a:3},
+{q:"What ……………. (you do) if you ……………. (see) an accident",o:["did you do - would see","will you do - see","have you done - seen","would you do - saw"],a:3},
+{q:"If his parents ……………. (come), Sam ……………. (bring) them to the theatre.",o:["come - would bring","came - would brought","came - would bring","would come - brought"],a:2},
+{q:"I don't know ………………I can get out of this mess",o:["how","why","what","where"],a:0},
+{q:"\"Don't worry about it.\"",o:["He told me to worry not.","He told me to not worry about it.","He told me not to worry.","He told me not to worry about that"],a:3},
+{q:"Sarah didn't answer the phone. She ………………been sleeping",o:["should have","might have","hadn't","mustn't have"],a:1},
+{q:"The man __________ is resting is very tire",o:["who","what","which","whom"],a:0},
+{q:"I talked to a woman __________ car had broken down on the way to the party.",o:["who","whom","whose","which"],a:2},
+{q:"The process of starting or restarting a computer is called:",o:["Booting","Connecting","Resetting","Start up point"],a:0},
+{q:"The present ………………is on the table is beautiful.",o:["who","which","whom","when"],a:1},
+{q:"If Peter ………………. (have) more money, he ………………. (buy) a new car.",o:["had - would buy","has - would buy","will have - would buy","would have - bought"],a:0},
+{q:"All input data, instructions and data interim to the processes are stored in the _________.",o:["Memory","CPU","Monitor","Printer"],a:0},
+{q:"What is an Internet Service Provider (ISP)?",o:["A dial-up or high-speed direct connection to the Internet","An organization that maintains a gateway to the Internet and rents access to it","The company that provides telephone lines to your home or office","A computer system with an Internet connection and the correct software for Internet communication"],a:1},
+{q:"The woman _______ next door is a famous singer.",o:["lives","who live","living","that living"],a:2},
+{q:"Summer is the time of the year __________ the weather is the hottest.",o:["which","that","whose","when"],a:3},
+{q:"Alaska, _______ my brother lives, is the largest state in the United States.",o:["where","which","who","that"],a:0},
+{q:"She……………her car carefully yesterday.",o:["drive","had driven","drove","drave"],a:2},
+{q:"What is the least expensive way to access the internet?",o:["With phone lines, an analog modem and an ISP","With a Digital Subscriber Line (DSL)","With a cable modem from the cable TV company","With a local area network (LAN) connection"],a:0},
+{q:"The physical parts of a computer. (Hint-The parts you can touch).",o:["Software","Hardware","Spyware","Touchpad"],a:1},
+{q:"A modem is best defined as...",o:["A piece of computer software that is used to browse the web (eg: internet explorer)","An interconnected group of computers.","A device that allows you to connect your PC to an internet service.","A program that prevents other people on the Internet from accessing your computer and your files."],a:2},
+{q:"I'm not going to tell you ……………….",o:["what you do should","what should you do","should you do what","what you should do"],a:3},
+{q:"She's ………………feeling well today.",o:["will be probably","not probably","probably not","maybe not"],a:2},
+{q:"A: I have a fever, and a head ache. B: Oh no! you ………………have a cold",o:["likely","must likely","can likely","most likely"],a:3},
+{q:"I'll have my assistant ………………you to reschedule the appointment.",o:["call","called","calling","to call"],a:0},
+{q:"My husband hates housework; I can never ………………him to wash the dishes!",o:["make","get","let","have"],a:1},
+{q:"Angga made me ………………his car. I can't tell you how scary it was",o:["driven","to drive","drive","drove"],a:2},
+{q:"I am going to have my students ………………an essay for next Friday.",o:["to write","wrote","writing","write"],a:3},
+{q:"I have no idea whether ………………meat or not.",o:["Jane eats","does Jane eats","Jane does it","Jane eating"],a:0},
+{q:"Do you have any idea ………………. on time?",o:["What if the flight is","if the flight is going to be","what if the flight is going to be","if is the flight going to be"],a:1},
+{q:"First web browser invented in 1990 is",o:["Mosaic","Nexus","WorldWideWeb","Internet Explorer"],a:2},
+{q:"The brain of the computer. This part does the calculation, moving and processing of information.",o:["Motherboard","RAM","ROM","CPU"],a:3},
+{q:"Ann ………………to the supermarket and ………………. some milk.",o:["go - went","went - bought","gone - bought","went - buy"],a:1},
+{q:"I ………………to the shop to buy the shirt I ………………. the day before.",o:["had gone - saw","been - had bought","went - had seen","had been seen - bought"],a:2},
+{q:"When we……………… (finish) dinner, we went out.",o:["have finished","finished","had finished","was finish"],a:2},
+{q:"A: I think I broke my tooth. B: Oh no! that ……………hurt.",o:["must really","could really","really can","will really"],a:0},
+{q:"If Gary has a headache, he ………………to take a nap.",o:["should take","must want","would must","should go"],a:1},
+{q:"The teacher told us ………………our finished exams",o:["where should we leave","where we leave should","should where we leave","where we should leave"],a:3},
+{q:"What unit does data travel across networks in?",o:["Packets","Routers","E-mails","Protocols"],a:0},
+{q:"Power of a computer depends on speed and ………",o:["capacity","monitor","motherboard","processor"],a:3},
+{q:"This is a measurement of speed over a network.",o:["Megahertz","Megabits per second","Bits","Megabytes"],a:1},
+{q:"Hard disk capacity is in ………",o:["megahertz","kilobytes","gigabytes","bytes"],a:2},
+{q:"Which is not an operating system?",o:["MS-Word","Windows","DOS","LINUX"],a:0},
+{q:"One MB is equal to...",o:["1024KB","One thousand bytes","1 billion bytes","The amount of RAM in every computer"],a:0},
+{q:"Which one is not an output device?",o:["Printer","Keyboard","Modem","Monitor"],a:1},
+{q:"I saw that movie ………… I was a child.",o:["until","when","after","before"],a:1},
+{q:"I was nervous about eating sushi, but my brother got me ………………. it at a Japanese restaurant",o:["trying","tried","to try","try"],a:2},
+{q:"Almost all desktop computers have ………… disks.",o:["magnetic tape","hard","optical","floppy"],a:1},
+{q:"When your meeting is finished, remember to end the call by pressing …… key",o:["Turn Off","Pick Up","Hold On","Hang Up"],a:3},
+{q:"…… is a device which selects the best route to send data from one network to another.",o:["Network","Router","Mainframe","Modem"],a:1},
+{q:"We use computer to keep the bank account and to look ………all materials and parts",o:["after","for","at","into"],a:1},
+{q:"Empty memory slots mean you can add more……………..",o:["cache memory","expansion slot","floppy drive","memory"],a:3},
+{q:"If you want to format a disk, choose \"Format\" from the ………… menu.",o:["bar","drop down","pop up","bottom"],a:2},
+{q:"The printer uses the larger ………………port.",o:["serial","USB","parallel","VGA"],a:2},
+{q:"Twenty one inches is monitor ………… size.",o:["often","usually","normally","common"],a:3},
+{q:"A hard disk drive normally………… several disks.",o:["get","fill","put","contains"],a:3},
+{q:"In the library, librarians use computers to ………………… the books.",o:["watch","look","find","see"],a:2},
+{q:"You can put a ………………on the palm of one hand",o:["PC","mainframe","handheld","microcomputer"],a:2},
+{q:"To remove a motherboard in a PC, first you have to ………… the old mother board.",o:["redo","remove","return","Reorder"],a:1},
+{q:"How many bits make a byte?",o:["16 bits","8 bits","24","12 bits"],a:1},
+{q:"The number of bit used by IPv6 address is",o:["16","32","64","128"],a:3},
+{q:"Expand the acronym ALU",o:["Arithmetic Ligic Unit","Arithmetic Log Unit","Arithmetic Logic Unit","Aluminate Logic Unit"],a:2},
+{q:"If you want a computer for game and internet, I think a …… is ok for you.",o:["PC","mainframe","handheld","microcomputer"],a:0},
+{q:"Handheld is a device which is used as an organizer, diary or \"…………\"?",o:["plan","work job","organize time","to do list"],a:3},
+{q:"GUI stands for ………………",o:["graphic user image","graphical user image","graphic user interface","graphical user interface"],a:3},
+{q:"You ………………put a floppy disk near a magnet",o:["don't","should","should not","do"],a:2},
+{q:"Different types of port are used for each…………………",o:["computer","printer","monitor","device"],a:3},
+{q:"We can go to the amusement park with you,………………?",o:["can we","can't we","don't we","aren't we"],a:1},
+{q:"What does URL stand for?",o:["Universal Response Locator","Universal Response Location","Uniform Resource Locator","Uniform Resource Location"],a:2},
+{q:"A ………… can fit into a jacket pocket.",o:["notebook","laptop","subnotebook","handheld"],a:3},
+{q:"Were the Wright brothers the ones __________ built the first aeroplane?",o:["that","which","who","whom"],a:0},
+{q:"What is the meaning of (CPU)?",o:["Central Processing Unit","Critical Processing Unit","Crucial Processing Unit","Central Printing Unit"],a:0},
+{q:"The other name for a Hard disk is:",o:["Compact Disc","Fixed Disk","Hard Drive Disk","Floppy Disk"],a:2},
+{q:"First computer virus is known as",o:["Rabbit","Elk cloner","SCA virus","Creeper program"],a:3},
+{q:"Physics is the __________ subject in high school.",o:["Most difficult","More difficult than","Difficultest","Difficulter"],a:0},
+{q:"She was searching the internet for ------------ information on mash-ups music.",o:["Access","Useful","Share","Load"],a:1},
+{q:"Many malls have free ------------so one can connect to the Internet.",o:["Laptops","PCs","Wi-Fi","Games"],a:2},
+{q:"Can I --------------your songs with my friend?",o:["Connect","Join","Listen","Share"],a:3},
+{q:"Main memory is also known as:",o:["Immediate access storage","Secondary Storage","PROM","RAM"],a:0},
+{q:"Which best describes the element of TCP/IP?",o:["Protocol software used to communicate with the Internet","Direct connection to an Internet Service Provider (ISP)","Windows, Linux/UNIX, Macintosh, etc.","PC, smartphone, smart TV, tablet, etc."],a:0},
+{q:"A term describing a computer connected to a central server with which it can communicate and from which it can request information:",o:["Client","Network","Database","LAN"],a:0},
+{q:"Websites use _________ to verify users as human and prevent malicious bot attacks.",o:["None of the above","CAPTCHA","Cookies","Urls"],a:1},
+{q:"Use __________________ when searching for information in a search engine.",o:["Protocols","Hyperlinks","Keywords","Notes"],a:2},
+{q:"Ping",o:["A measurement of data transferred to your local station from a specific network source.","A sound used for testing your computer speakers.","None of the above.","A computer network tool used to test whether a particular host is reachable across an IP network; it is also used to self test the Network Interface Card (NIC) of the computer."],a:3},
+{q:"A ………… has size of a small typewriter.",o:["handheld","notebook","laptop","subnotebook"],a:1},
+{q:"What should he buy if he wants a computer for writing letter and to keep staff records and to keep a diary of appointments.",o:["A minicomputer","A PC","A mainframe","A supercomputer"],a:1},
+{q:"What protocol is required for computers to communicate with one another over the internet?",o:["TCP/IP","HTTP","FTP","POP"],a:0},
+{q:"The form of online fraud similar to phishing that redirects victims to the fake website instead of baiting through an email or a link is called",o:["Scamming","Exploiting","Pharming","Phishing"],a:2},
+{q:"Barcoding items require a computer to ………………the barcode labels and maintain the inventory.",o:["generating","generate","generated","generation"],a:1},
+{q:"Computer Science is?",o:["the communication of data by electronic means, usually over some distance.","more inclined and widely used in the educational sector.","the mother of all computational disciplines (Computer Engineering, Information Technology/Information Science, Software Engineering, ICT, etc).","Information Technology refers to an entire field that uses computers, networking, software, and other equipment to manage information electronically in a digital form."],a:2},
+{q:"One of the advantages of information technology is",o:["Easy to handle","Both a and b","None","Streamline communication"],a:3},
+{q:"This technology is used to make telephone calls over the Internet possible.",o:["VoIP","Bluetooth","Ethernet","All of the above"],a:0},
+{q:"One component of the motherboard is:",o:["Transistor","Processor","Bios","Computer Chip"],a:1},
+{q:"A computer system may be categorised as a:",o:["Game consoles and server","Super computers and main frames","General purpose or special purpose","Embedded computers"],a:2},
+{q:"Which of the statements below best describes the DSL?",o:["DSL stands for Digital Service Line, a dial-up Internet connection method that uses cable TV network lines and a cable modem","DSL stands for Digital Service Line, a direct Internet connection method that uses cable TV network lines and a cable modem","DSL stands for Digital Subscriber Line, a dial-up Internet connection method that uses digital phone lines and an xDSL modem","DSL stands for Digital Subscriber Line, a direct Internet connection method that uses digital phone lines and an xDSL modem"],a:3},
+{q:"A tool used to organize, store, retrieve, and communicate groups of related information.",o:["Database","Spreadsheet","Word","Presentations"],a:0},
+{q:"What is download",o:["A unit of information or computer storage equal to either 1,024 bytes (2 to the 10th power) or 1,000 bytes (10 to the 3rd power), depending on context","When data is received on your PC. This includes, but is not limited to, viewing webpages, receiving e-mail, watching videos, getting movies, getting music and email attachments.","A local area network which uses high frequency radio signals to send and receive data over short distances.","When you transmit data from your PC to another computer."],a:1},
+{q:"Which definition BEST describes a computer.",o:["A machine used to surf the web","A device that collects dust and viruses.","An electronic device that manipulates information and data","A solar calculating machine."],a:2},
+{q:"Malware is best defined as ...",o:["A computer program designed to protect the operating system from viruses.","Microsoft Arithmetic LAN software. Software run in the background of any Windows based computer system used to manage network connections","Software designed to infiltrate or damage a computer system without the owner's informed consent.","None of the above."],a:2},
+{q:"Which definition best describes a network?",o:["A central repository of programs and data to which all member users have access","An architecture of computers that divides processing and storage tasks between clients and servers","A system that requests services from other computers and is used to access files or documents","A group of computers connected so they can communicate, share resources and exchange data"],a:3},
+{q:"What do we call an attack that focuses on capturing small packets from the network transmitted by other computers and reading the data content in search of any type of information?",o:["Eavesdropping","Phishing","Scams","Exploits"],a:0},
+{q:"Which option below is a sign that suggests the email you received from your bank is possibly forged and an attempt at phishing?",o:["You see your full name and your postal address in the email, information you provided when you registered for your online banking account 2 years ago.","The domain name of the email sender corresponds with the bank name. (e.g. td bank: ...@tcom)","The email contains spelling and grammar mistakes.","URL of the bank provided in the email."],a:2},
+{q:"Which of these methods is NOT a sufficient way to prevent malware attacks?",o:["Using and updating legitimate security software and performing daily scans.","Having your firewall on.","Never use an electronic device.","All of them"],a:2},
+{q:"Name the malicious program that cannot do anything until actions are taken to activate the file attached by the malware.",o:["Virus","Worm","Trojan Horse","Phishing"],a:0},
+{q:"………………contains all the constructions your computer needs to activate itself when you switch on.",o:["chip memory","expansion card","ROM","RAM"],a:2},
+{q:"Which of the following best suits the statement below? It's the main memory of the computer system and is volatile.",o:["RAM","ROM","PROM","Primary storage"],a:0},
+{q:"What are types of user interface?",o:["System application, software application, system software","Menu driven, command driven, graphical user interface","File management, memory management, device management","General purpose, customised, integrated"],a:1},
+{q:"What does SATA stands for?",o:["Serial Advanced Technical Attachments","Small Advanced Technical Attachments","Serial Advanced Technology Attachments","Small Advanced Technology Attachments"],a:2},
+{q:"What does internet security do to help your computer?",o:["it keeps you from downloading internet files.","It stops you from accessing the internet.","It messes with your computers operating system.","It clears all the viruses and trojans from your system."],a:3},
+{q:"What distinguishes a LAN from a WAN?",o:["A LAN spans a confined geographic area, whereas a WAN consists of multiple LANs.","A LAN consists of multiple WANs, whereas a WAN consists of multiple computers.","A LAN uses public networks and high-speed lines, whereas a WAN is private and may use slower lines.","A LAN spans a wide geographic area, whereas a WAN spans a confined area such as an office or home."],a:0},
+{q:"Of the six required elements of connecting to the internet, which can be supplied in the form of a web browser, an e-mail program, or a mobile application?",o:["Operating system","Client software","Internet address","Internet connection"],a:1},
+{q:"An IP address is best defined as...",o:["The location of Internet Packets measured in kilobytes on a network.","All of the above.","An IP Address is a unique number consisting of 4 parts separated by dots (eg: 217.247.84.89) associated with every system connected to a network","Internet Provider Address. The address of a company that provides individuals and other companies access to the Internet."],a:2},
+{q:"Bandwidth",o:["A measurement of how much information can be carried in a given time period (usually a second) over a wired or wireless communications link.","The speed at which data can be transferred from the server to the client.","A unit of information or computer storage equal to one billion bytes.","None of the above."],a:0},
+{q:"What distinguishes a traditional modem from an ISDN line?",o:["A modem provides a dial-up Internet connection, whereas an ISDN line provides a direct Internet connection.","A modem connects a user to an all-digital network, whereas ISDN adapts a computer to a phone line or cable TV network.","ISDN uses a digital line, whereas a traditional modem must translate digital signals to analog and back.","ISDN translates digital signals to analog and back, whereas a modem uses a digital line"],a:2},
+{q:"First search engine on internet is",o:["Aliweb","Google","Bing","Yahoo"],a:0},
+{q:"What technology is used to record cryptocurrency transactions?",o:["Mining","Digital wallet","Blockchain technology","Token"],a:2},
+{q:"By the time his friend ………………. the conclusion, Luke ………………. all the assignment",o:["had finished - had sent","had sent - finished","finished - had already sent","sent - had already finished"],a:3}
+];
+
+let questions = [];
+let current = 0;
+let answered = [];
+let score = 0;
+let mode = 'all';
+let showResult = false;
+let reviewMode = false;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function startQuiz(m) {
+  mode = m;
+  if(m==='random') {
+    questions = shuffle(ALL).slice(0, 20);
+  } else {
+    questions = [...ALL];
+  }
+  current = 0;
+  answered = new Array(questions.length).fill(null);
+  score = 0;
+  showResult = false;
+  reviewMode = false;
+  render();
+}
+
+function selectAnswer(idx) {
+  if(answered[current] !== null) return;
+  answered[current] = idx;
+  if(idx === questions[current].a) score++;
+  render();
+}
+
+function go(dir) {
+  current = Math.max(0, Math.min(questions.length-1, current+dir));
+  render();
+}
+
+function finish() {
+  showResult = true;
+  reviewMode = false;
+  render();
+}
+
+function renderHome() {
+  return `
+    <h2 class="sr-only">Bài trắc nghiệm ôn tập tiếng Anh</h2>
+    <div style="text-align:center;padding:2rem 0">
+      <div style="font-size:40px;margin-bottom:12px">📚</div>
+      <div class="title" style="margin-bottom:8px">Trắc nghiệm ôn tập</div>
+      <p style="font-size:14px;color:var(--color-text-secondary);margin-bottom:2rem">Tổng cộng ${ALL.length} câu hỏi</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn primary" onclick="startQuiz('all')">Làm tất cả (${ALL.length} câu)</button>
+        <button class="btn" onclick="startQuiz('random')">Ngẫu nhiên 20 câu</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderQuiz() {
+  const q = questions[current];
+  const ans = answered[current];
+  const pct = Math.round(((current + (ans!==null?1:0)) / questions.length) * 100);
+  const done = answered.filter(x=>x!==null).length;
+
+  let opts = q.o.map((o,i) => {
+    let cls = 'opt';
+    if(ans !== null) {
+      if(i === q.a) cls += ' correct';
+      else if(i === ans && ans !== q.a) cls += ' wrong';
+    }
+    return `<button class="${cls}" onclick="selectAnswer(${i})" ${ans!==null?'disabled':''}>${String.fromCharCode(65+i)}. ${o}</button>`;
+  }).join('');
+
+  let feedback = '';
+  if(ans !== null) {
+    if(ans === q.a) feedback = `<div class="feedback ok">✓ Đúng rồi!</div>`;
+    else feedback = `<div class="feedback no">✗ Sai. Đáp án đúng: ${String.fromCharCode(65+q.a)}</div>`;
+  }
+
+  const allAnswered = answered.every(x=>x!==null);
+
+  return `
+    <div class="header">
+      <span class="counter">Câu ${current+1}/${questions.length}</span>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <span class="counter">Đúng: ${score}/${done}</span>
+    </div>
+    <div class="q-card">
+      <div class="q-text"><b>Câu ${current+1}.</b> ${q.q}</div>
+      ${feedback}
+      ${opts}
+    </div>
+    <div class="nav">
+      <button class="btn" onclick="go(-1)" ${current===0?'disabled':''}>← Trước</button>
+      <button class="btn" onclick="go(1)" ${current===questions.length-1?'disabled':''}>Tiếp →</button>
+      ${allAnswered ? `<button class="btn primary" onclick="finish()">Xem kết quả</button>` : ''}
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:4px;flex-wrap:wrap">
+      ${answered.map((a,i)=>`<button onclick="current=${i};render()" style="width:32px;height:32px;border-radius:6px;border:0.5px solid var(--color-border-secondary);font-size:12px;cursor:pointer;background:${i===current?'#7F77DD':a===null?'transparent':a===questions[i].a?'#EAF3DE':'#FCEBEB'};color:${i===current?'#fff':'var(--color-text-primary)'};font-family:var(--font-sans)">${i+1}</button>`).join('')}
+    </div>
+  `;
+}
+
+function renderResult() {
+  const total = questions.length;
+  const pct = Math.round((score/total)*100);
+  let badge = pct>=80?'🏆':pct>=60?'👍':pct>=40?'😐':'📖';
+  let msg = pct>=80?'Xuất sắc!':pct>=60?'Khá tốt!':pct>=40?'Cần ôn thêm':'Hãy ôn tập thêm nhé';
+
+  let wrongItems = questions.map((q,i)=>({q,i,ans:answered[i]})).filter(x=>x.ans!==x.q.a);
+
+  let review = wrongItems.length === 0 ? '<p style="color:var(--color-text-secondary);font-size:14px">Bạn làm đúng tất cả! 🎉</p>' :
+    wrongItems.map(({q,i,ans})=>`
+      <div class="review-item">
+        <div class="review-q">Câu ${i+1}: ${q.q}</div>
+        <div class="review-ans">Bạn chọn: <span class="no">${String.fromCharCode(65+ans)}. ${q.o[ans]}</span></div>
+        <div class="review-ans">Đáp án đúng: <span class="ok">${String.fromCharCode(65+q.a)}. ${q.o[q.a]}</span></div>
+      </div>
+    `).join('');
+
+  return `
+    <div class="result">
+      <div class="badge">${badge}</div>
+      <h2>${msg}</h2>
+      <p>Bạn đúng <b>${score}/${total}</b> câu (${pct}%)</p>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:2rem">
+        <button class="btn primary" onclick="startQuiz('all')">Làm lại (tất cả)</button>
+        <button class="btn" onclick="startQuiz('random')">Ngẫu nhiên 20 câu</button>
+        <button class="btn" onclick="questions=[...ALL];current=0;showResult=false;render()">Xem lại câu hỏi</button>
+      </div>
+    </div>
+    ${wrongItems.length>0?`<div style="font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px">Câu sai (${wrongItems.length}):</div>`:''}
+    ${review}
+  `;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if(questions.length === 0) { app.innerHTML = renderHome(); return; }
+  if(showResult) { app.innerHTML = renderResult(); return; }
+  app.innerHTML = renderQuiz();
+}
+
+render();
+</script>
